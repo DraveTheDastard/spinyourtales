@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpinYourTales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1a1208;
+    --ink-mid: #3d2e1a;
+    --ink-light: #6b5240;
+    --parchment: #f5ecd7;
+    --parchment-dark: #e8d9b8;
+    --parchment-darker: #d4c090;
+    --graph-line: rgba(100, 140, 180, 0.18);
+    --red-ink: #8b1a1a;
+    --blue-ink: #1a3a6b;
+    --accent-gold: #b8860b;
+  }
+
+  html, body {
+    min-height: 100vh;
+    background-color: var(--parchment);
+    font-family: 'Crimson Pro', Georgia, serif;
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  /* Graph paper background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--graph-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--graph-line) 1px, transparent 1px),
+      linear-gradient(rgba(100,140,180,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(100,140,180,0.07) 1px, transparent 1px);
+    background-size: 80px 80px, 80px 80px, 16px 16px, 16px 16px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Paper texture overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(210,180,120,0.15) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 80%, rgba(180,150,100,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(160,130,80,0.08) 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Centered scene container — everything positions relative to this */
+  .scene {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5rem 1.5rem;
+    /* max-width matches card width plus room for props */
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  /* Background props — positioned relative to .scene */
+  .bg-dice {
+    position: absolute;
+    top: 20px;
+    left: -40px;
+    width: 280px;
+    opacity: 0.90;
+    transform: rotate(-20deg);
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  .bg-pencil {
+    position: absolute;
+    bottom: 60px;
+    left: -40px;
+    width: 260px;
+    opacity: 0.85;
+    transform: rotate(165deg);
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  .bg-tanzil {
+    position: absolute;
+    top: 20px;
+    right: -80px;
+    width: 340px;
+    opacity: 0.80;
+    transform: rotate(8deg);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Notebook paper card */
+  .card {
+    background: #fdf8ee;
+    border: 1px solid var(--parchment-darker);
+    border-radius: 2px;
+    padding: 3rem 3.5rem 3.5rem;
+    max-width: 540px;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+    box-shadow:
+      4px 4px 0px var(--parchment-darker),
+      8px 8px 0px rgba(0,0,0,0.06),
+      0 20px 60px rgba(0,0,0,0.12);
+    animation: fadeUp 0.6s ease both;
+  }
+
+  /* Red margin line */
+  .card::before {
+    content: '';
+    position: absolute;
+    left: 72px;
+    top: 0;
+    bottom: 0;
+    width: 1.5px;
+    background: rgba(139, 26, 26, 0.35);
+    border-radius: 1px;
+  }
+
+  /* Notebook holes */
+  .holes {
+    position: absolute;
+    left: 26px;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+  }
+
+  .hole {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--parchment);
+    border: 1.5px solid var(--parchment-darker);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
+  }
+
+  /* Tape */
+  .tape {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-1.5deg);
+    width: 90px;
+    height: 28px;
+    background: rgba(255, 240, 180, 0.75);
+    border: 1px solid rgba(200, 180, 100, 0.4);
+    border-radius: 1px;
+  }
+
+  /* The S — inside card, top right corner */
+  .card-the-s {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    width: 52px;
+    opacity: 0.75;
+    transform: rotate(6deg);
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  /* Coffee stain overlapping card corner */
+  .card-stain {
+    position: absolute;
+    bottom: -80px;
+    right: -80px;
+    width: 240px;
+    opacity: 0.80;
+    transform: rotate(-12deg);
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  .card-inner {
+    padding-left: 1.5rem;
+  }
+
+  /* Pencil scribble */
+  .scribble {
+    position: absolute;
+    top: 22px;
+    right: 80px;
+    opacity: 0.15;
+    font-family: 'Special Elite', monospace;
+    font-size: 11px;
+    color: var(--ink-mid);
+    transform: rotate(8deg);
+    letter-spacing: 0.5px;
+    line-height: 1.6;
+    text-align: right;
+    pointer-events: none;
+  }
+
+  .site-title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(1.8rem, 5vw, 2.8rem);
+    color: var(--ink);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.5px;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.08);
+  }
+
+  .tagline {
+    font-family: 'Special Elite', monospace;
+    font-size: 0.82rem;
+    color: var(--ink-light);
+    letter-spacing: 0.04em;
+    margin-bottom: 2.5rem;
+    font-style: italic;
+    border-bottom: 1px solid var(--parchment-darker);
+    padding-bottom: 1.5rem;
+  }
+
+  .section-label {
+    font-family: 'Special Elite', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--red-ink);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(139,26,26,0.2);
+  }
+
+  .link-group {
+    margin-bottom: 2rem;
+  }
+
+  .link-group:last-child {
+    margin-bottom: 0;
+  }
+
+  .link-item {
+    display: block;
+    text-decoration: none;
+    padding: 0.7rem 0.9rem;
+    margin-bottom: 0.5rem;
+    border: 1.5px solid transparent;
+    border-radius: 1px;
+    transition: all 0.15s ease;
+    position: relative;
+    background: transparent;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .link-item:nth-child(1) { animation-delay: 0.15s; }
+  .link-item:nth-child(2) { animation-delay: 0.22s; }
+  .link-item:nth-child(3) { animation-delay: 0.29s; }
+
+  .link-item:hover {
+    background: rgba(180, 150, 80, 0.1);
+    border-color: var(--parchment-darker);
+    transform: translateX(3px);
+  }
+
+  .link-item:hover .link-arrow {
+    opacity: 1;
+    transform: translateX(0) translateY(-50%);
+  }
+
+  .link-name {
+    font-family: 'Special Elite', monospace;
+    font-size: 1rem;
+    color: var(--ink);
+    display: block;
+    letter-spacing: 0.02em;
+  }
+
+  .link-desc {
+    font-family: 'Crimson Pro', serif;
+    font-size: 0.82rem;
+    color: var(--ink-light);
+    font-style: italic;
+    margin-top: 1px;
+  }
+
+  .link-arrow {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateX(-4px) translateY(-50%);
+    opacity: 0;
+    color: var(--accent-gold);
+    font-size: 1.1rem;
+    transition: all 0.15s ease;
+  }
+
+  .group-writing .link-item:hover .link-name { color: var(--blue-ink); }
+  .group-gaming .link-item:hover .link-name { color: var(--red-ink); }
+
+  .dice-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 1.2rem;
+    opacity: 0.55;
+  }
+
+  .die {
+    font-size: 1.3rem;
+    line-height: 1;
+    color: var(--ink-mid);
+  }
+
+  .title-underline {
+    height: 3px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--ink) 0px,
+      var(--ink) 8px,
+      transparent 8px,
+      transparent 12px
+    );
+    opacity: 0.15;
+    margin-bottom: 0.75rem;
+    border-radius: 2px;
+  }
+
+  .footer-note {
+    font-family: 'Special Elite', monospace;
+    font-size: 0.65rem;
+    color: var(--ink-light);
+    text-align: center;
+    margin-top: 2.5rem;
+    letter-spacing: 0.06em;
+    opacity: 0.7;
+    position: relative;
+    z-index: 2;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 640px) {
+    .card { padding: 2.5rem 2rem 3rem; }
+    .card::before { left: 56px; }
+    .holes { left: 18px; }
+    .card-inner { padding-left: 0.75rem; }
+    .bg-tanzil { display: none; }
+    .bg-dice { display: none; }
+    .bg-pencil { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scene">
+
+  <!-- Background props anchored to scene, not viewport -->
+  <img src="dice.png" class="bg-dice" alt="">
+  <img src="pencil.png" class="bg-pencil" alt="">
+  <img src="tanzil.png" class="bg-tanzil" alt="">
+
+  <div class="card">
+    <div class="tape"></div>
+    <div class="holes">
+      <div class="hole"></div>
+      <div class="hole"></div>
+      <div class="hole"></div>
+    </div>
+
+    <img src="theess.png" class="card-the-s" alt="">
+    <img src="coffeestain.png" class="card-stain" alt="">
+
+    <div class="scribble">
+      campaign notes<br>
+      char. sheet #4<br>
+      ★ revise ch. 3
+    </div>
+
+    <div class="card-inner">
+      <div class="dice-row">
+        <span class="die">⬡</span>
+        <span class="die">⬠</span>
+        <span class="die">◇</span>
+        <span class="die">⬡</span>
+      </div>
+
+      <h1 class="site-title">Spin Your Tales</h1>
+      <div class="title-underline"></div>
+      <p class="tagline">Be it by spoken, written, or rolled; always Spin Your Tale.</p>
+
+      <div class="link-group group-writing">
+        <div class="section-label">The Written Word</div>
+
+        <a href="https://tanziltalks.substack.com/" class="link-item" target="_blank" rel="noopener">
+          <span class="link-name">TanzilTalks</span>
+          <span class="link-desc">The novel, The Grimoire of Tanzil, the world, and the words behind both</span>
+          <span class="link-arrow">→</span>
+        </a>
+
+        <a href="https://bksy.app/profile/tanziltalks.bsky.social" class="link-item" target="_blank" rel="noopener">
+          <span class="link-name">Bluesky</span>
+          <span class="link-desc">Thoughts, updates, and the occasional overshare</span>
+          <span class="link-arrow">→</span>
+        </a>
+      </div>
+
+      <div class="link-group group-gaming">
+        <div class="section-label">The Rolled Dice</div>
+
+        <a href="https://www.instagram.com/dastardlydravegames" class="link-item" target="_blank" rel="noopener">
+          <span class="link-name">Instagram — DastardlyDrave</span>
+          <span class="link-desc">Behind the screen and at the table</span>
+          <span class="link-arrow">→</span>
+        </a>
+
+        <a href="https://www.tiktok.com/@dastardlydrave" class="link-item" target="_blank" rel="noopener">
+          <span class="link-name">TikTok — DastardlyDrave</span>
+          <span class="link-desc">Short-form chaos from a professional chaos merchant</span>
+          <span class="link-arrow">→</span>
+        </a>
+
+        <a href="https://roguegamemasters.com/profiles/dastardlydrave" class="link-item" target="_blank" rel="noopener">
+          <span class="link-name">Rogue Game Masters</span>
+          <span class="link-desc">In-person gaming with professional Game Masters.</span>
+          <span class="link-arrow">→</span>
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <p class="footer-note">© SpinYourTales · All rights reserved</p>
+
+</div>
+
+</body>
+</html>
